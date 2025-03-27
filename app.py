@@ -2,6 +2,7 @@ import os
 import pandas as pd
 from flask import Flask, render_template, url_for
 
+
 app = Flask(__name__)
 
 def load_data():
@@ -136,5 +137,5 @@ def index():
 
 # DŮLEŽITÉ: Spuštění Flasku na 0.0.0.0 a portu z os.environ["PORT"] pro Railway
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 4000))
     app.run(host="0.0.0.0", port=port, debug=True)
