@@ -38,7 +38,13 @@
     }
     table th, table td {
       text-align: center;
-      white-space: nowrap; /* Zabrání zalomení textu a rozšíří sloupec */
+      white-space: nowrap;
+      padding: 0.75rem;
+    }
+    /* Pro tabulku pokut nastavíme wrapování textu */
+    #pokuty-table th, #pokuty-table td {
+      white-space: normal;
+      word-wrap: break-word;
     }
     .card {
       border: 1px solid #000000;
@@ -65,14 +71,9 @@
       margin: 0 auto;
       display: block;
     }
-    /* Nastavení stejné (pevné) výšky pro sekce */
-    .section-block {
-      min-height: 600px;  /* Minimální výška sekce */
-      max-height: 600px;  /* Maximální výška sekce */
-      overflow-y: auto;   /* Zobrazí scrollbar, pokud je obsah delší */
-      margin-bottom: 30px;
-      border: 1px solid #ddd; /* Volitelný rámeček pro lepší přehled */
-      padding: 15px;
+    /* Globální styl pro label – zajistí, že popisky budou tučné */
+    label {
+      font-weight: bold;
     }
   </style>
 </head>
@@ -82,9 +83,8 @@
     <h1>Podle peří poznáš ptáka, podle ptáka Chroustováka...</h1>
   </header>
   <div class="container my-4">
-
-    <!-- Sestava -->
-    <section class="section-block">
+    <!-- Sestava – hráči jako karty -->
+    <section>
       <h2>Sestava</h2>
       {% for pos, players in data['sestava'].items() %}
         <h3>{{ pos|capitalize }}</h3>
@@ -93,17 +93,19 @@
             <div class="col-md-3">
               <div class="card">
                 {% if player['Foto'] %}
-                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/' ~ player['Foto']) }}" alt="{{ player['Jméno'] }}" style="max-height:150px;">
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/' ~ player['Foto']) }}" alt="{{ player['Jméno'] }}{% if player['Příjmení'] %} {{ player['Příjmení'] }}{% endif %}" style="max-height:150px;">
                 {% else %}
                   <img class="card-img-top" src="{{ url_for('static', filename='fotky/placeholder.png') }}" alt="Není k dispozici" style="max-height:150px;">
                 {% endif %}
                 <div class="card-body">
-                  <h5 class="card-title name-title">{{ player['Jméno'] }}</h5>
+                  <h5 class="card-title name-title">
+                    {{ player['Jméno'] }}{% if player['Příjmení'] %} {{ player['Příjmení'] }}{% endif %}
+                  </h5>
                   <p class="card-text">
-                    Věk: {{ player['Věk'] }}<br>
-                    Číslo dresu: {{ player['Číslo dresu'] }}<br>
-                    Popis: {{ player['Popis'] }}<br>
-                    Počet gólů: {{ player['Počet gólů za sezónu'] }}
+                    <label>Věk:</label> {{ player['Věk'] }}<br>
+                    <label>Číslo dresu:</label> {{ player['Číslo dresu'] }}<br>
+                    <label>Popis:</label> {{ player['Popis'] }}<br>
+                    <label>Počet gólů:</label> {{ player['Počet gólů za sezónu'] }}
                   </p>
                 </div>
               </div>
@@ -114,15 +116,15 @@
     </section>
 
     <!-- Pokuty (dříve Ceník) -->
-    <section class="section-block">
+    <section>
       <h2>Pokuty</h2>
-      <div class="text-center">
+      <div id="pokuty-table" class="text-center">
         {{ data['cenik']|safe }}
       </div>
     </section>
 
     <!-- Částka v kase -->
-    <section class="section-block">
+    <section>
       <h2>Částka v kase</h2>
       <div class="kasa-display">
         {{ data['kasa']|safe }}
@@ -130,7 +132,7 @@
     </section>
 
     <!-- Dluhy -->
-    <section class="section-block">
+    <section>
       <h2>Dluhy</h2>
       <div class="text-center">
         {{ data['dluhy']|safe }}
@@ -138,7 +140,7 @@
     </section>
 
     <!-- Top 3 největší dlužníci -->
-    <section class="section-block">
+    <section>
       <h2>Aktuálně 3 největší dlužníci</h2>
       {% if data['vitezove'].get('top3_dluhu') and data['vitezove']['top3_dluhu']|length > 0 %}
         <div class="row justify-content-center">
@@ -147,11 +149,13 @@
               <div class="card">
                 <img class="card-img-top top-debtor-img"
                      src="{{ url_for('static', filename='fotky/' ~ debtor['Foto']) }}"
-                     alt="{{ debtor['Jméno'] }}">
+                     alt="{{ debtor['Jméno'] }}{% if debtor['Příjmení'] %} {{ debtor['Příjmení'] }}{% endif %}">
                 <div class="card-body">
-                  <h5 class="card-title name-title">{{ debtor['Jméno'] }}</h5>
+                  <h5 class="card-title name-title">
+                    {{ debtor['Jméno'] }}{% if debtor['Příjmení'] %} {{ debtor['Příjmení'] }}{% endif %}
+                  </h5>
                   <p class="card-text">
-                    Dluh: {{ debtor['Dluh'] }}
+                    <label>Dluh:</label> {{ debtor['Dluh'] }}
                   </p>
                 </div>
               </div>
@@ -162,7 +166,6 @@
         <p class="text-center">Žádná data o dluzích nebyla nalezena.</p>
       {% endif %}
     </section>
-
   </div>
 </body>
 </html>

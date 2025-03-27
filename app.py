@@ -2,14 +2,11 @@ import os
 import pandas as pd
 from flask import Flask, render_template, url_for
 
-
 app = Flask(__name__)
 
 def load_data():
     excel_file = "main.xlsx"
 
-    # Zde by měly být všechny knihovny a kód na načítání Excelu a zpracování DataFrame
-    # ----------------------------------------------------------
     if not os.path.exists(excel_file):
         print(f"Excel soubor '{excel_file}' nebyl nalezen!")
         cenik_df = pd.DataFrame()
@@ -21,7 +18,9 @@ def load_data():
             xl = pd.ExcelFile(excel_file, engine='openpyxl')
             print("Nalezené listy v Excelu:", xl.sheet_names)
             cenik_df = pd.read_excel(xl, sheet_name="Ceník", engine='openpyxl')
-            kasa_df = pd.read_excel(xl, sheet_name="Částka v kase", engine='openpyxl')
+            # Načteme "Částka v kase" bez hlavičky a přiřadíme název sloupce
+            kasa_df = pd.read_excel(xl, sheet_name="Částka v kase", engine='openpyxl', header=None)
+            kasa_df.columns = ["Částka"]
             dluhy_df = pd.read_excel(xl, sheet_name="Dluhy", engine='openpyxl')
             sestava_df = pd.read_excel(xl, sheet_name="Sestava", engine='openpyxl')
         except Exception as e:
@@ -37,13 +36,13 @@ def load_data():
     dluhy_df = dluhy_df.fillna("")
     sestava_df = sestava_df.fillna("")
 
-    # 1) Formátování čísla dresu – bez desetinných míst
+    # 1) Formátování sloupce "Číslo dresu" – bez desetinných míst
     if "Číslo dresu" in sestava_df.columns:
         sestava_df["Číslo dresu"] = sestava_df["Číslo dresu"].apply(
             lambda x: str(int(x)) if x != "" and str(x).replace('.', '', 1).isdigit() else ""
         )
 
-    # 2) U všech sloupců v "kasa_df" se pokusíme přidat "KČ", pokud je to číslo
+    # 2) U všech sloupců v kasa_df se pokusíme přidat " KČ", pokud je to číslo
     for col in kasa_df.columns:
         try:
             numeric_col = pd.to_numeric(kasa_df[col], errors='coerce')
@@ -61,7 +60,7 @@ def load_data():
         except Exception:
             pass
 
-    # 4) Dluhy: pro výpočet top 3 dlužníků si vytvoříme kopii s numerickým sloupcem "Dluh_numeric"
+    # 4) Dluhy: pro výpočet top 3 dlužníků vytvoříme kopii s numerickým sloupcem "Dluh_numeric"
     raw_dluhy_df = dluhy_df.copy()
     if "Dluh" in raw_dluhy_df.columns:
         raw_dluhy_df["Dluh_numeric"] = pd.to_numeric(raw_dluhy_df["Dluh"], errors="coerce")
@@ -72,12 +71,11 @@ def load_data():
                 debtor_name = str(row.get("Jméno", "")).strip()
                 dluh_numeric = row["Dluh_numeric"]
                 photo = "placeholder.png"
-
+                # Hledáme fotku v sestavě pouze podle sloupce "Jméno"
                 if not sestava_df.empty and "Jméno" in sestava_df.columns and "Foto" in sestava_df.columns:
                     match = sestava_df[sestava_df["Jméno"].str.strip() == debtor_name]
                     if not match.empty:
                         photo = match.iloc[0]["Foto"]
-
                 vitezove_list.append({
                     "Jméno": debtor_name,
                     "Dluh": f"{int(dluh_numeric)} KČ" if pd.notna(dluh_numeric) else "",
@@ -105,12 +103,12 @@ def load_data():
         for pos in positions:
             sestava_groups[pos] = []
 
-    # 7) Vytvoření HTML tabulek
+    # 7) Vytvoření HTML tabulek; pro "kasa_df" odstraníme záhlaví (header=False)
     cenik_html = cenik_df.to_html(classes="table table-striped text-center", index=False, na_rep="")
-    kasa_html = kasa_df.to_html(classes="table table-striped text-center", index=False, na_rep="")
+    kasa_html = kasa_df.to_html(classes="table table-striped text-center", index=False, header=False, na_rep="")
     dluhy_html = dluhy_df.to_html(classes="table table-striped text-center", index=False, na_rep="")
 
-    # 8) Zvýšení šířky sloupce „Částka“ (nebo „Momentální částka v kase“) pomocí replace
+    # Zvýšení šířky sloupce "Částka" / "Momentální částka v kase"
     for col_name in ["Částka", "Momentální částka v kase"]:
         kasa_html = kasa_html.replace(
             f"<th>{col_name}</th>",
@@ -135,7 +133,7 @@ def index():
     data = load_data()
     return render_template("index.html", data=data)
 
-# DŮLEŽITÉ: Spuštění Flasku na 0.0.0.0 a portu z os.environ["PORT"] pro Railway
+# Spuštění Flasku pro Railway: naslouchání na 0.0.0.0 a portu z proměnné PORT
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 4000))
+    port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port, debug=True)
