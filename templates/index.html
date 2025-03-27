@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8">
+  <title>Pokladna fotbalového týmu</title>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: #ffffff;
+      color: #000000;
+    }
+    header {
+      background-color: #ff0000;
+      padding: 20px;
+      text-align: center;
+    }
+    header img {
+      max-height: 100px;
+    }
+    header h1 {
+      font-size: 2.5rem;
+      color: #ffffff;
+      margin-top: 10px;
+    }
+    h2 {
+      border-bottom: 2px solid #000000;
+      padding-bottom: 5px;
+      margin-top: 30px;
+      text-align: center;
+    }
+    h3 {
+      margin-top: 20px;
+      text-align: center;
+    }
+    table {
+      table-layout: auto;
+      margin: 0 auto;
+    }
+    table th, table td {
+      text-align: center;
+      white-space: nowrap; /* Zabrání zalomení textu a roztáhne sloupec */
+    }
+    .card {
+      border: 1px solid #000000;
+      text-align: center;
+      margin: 10px;
+    }
+    .card img {
+      object-fit: contain;
+    }
+    .kasa-display {
+      font-size: 2.5rem;
+      font-weight: bold;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .name-title {
+      font-weight: bold;
+      font-size: 1.5rem;
+    }
+    .top-debtor-img {
+      max-height: 150px;
+      max-width: 150px;
+      object-fit: contain;
+      margin: 0 auto;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="{{ url_for('static', filename='logo.png') }}" alt="Logo">
+    <h1>Podle peří poznáš ptáka, podle ptáka Chroustováka...</h1>
+  </header>
+  <div class="container my-4">
+    <!-- Sestava – hráči jako karty -->
+    <h2>Sestava</h2>
+    {% for pos, players in data['sestava'].items() %}
+      <h3>{{ pos|capitalize }}</h3>
+      <div class="row justify-content-center">
+        {% for player in players %}
+          <div class="col-md-3">
+            <div class="card">
+              {% if player['Foto'] %}
+                <img class="card-img-top" src="{{ url_for('static', filename='fotky/' ~ player['Foto']) }}" alt="{{ player['Jméno'] }} {{ player['Příjmení'] }}" style="max-height:150px;">
+              {% else %}
+                <img class="card-img-top" src="{{ url_for('static', filename='fotky/placeholder.png') }}" alt="Není k dispozici" style="max-height:150px;">
+              {% endif %}
+              <div class="card-body">
+                <h5 class="card-title name-title">{{ player['Jméno'] }} {{ player['Příjmení'] }}</h5>
+                <p class="card-text">
+                  Věk: {{ player['Věk'] }}<br>
+                  Číslo dresu: {{ player['Číslo dresu'] }}<br>
+                  Popis: {{ player['Popis'] }}<br>
+                  Počet gólů: {{ player['Počet gólů za sezónu'] }}
+                </p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endfor %}
+
+    <!-- Ceník -->
+    <h2>Ceník</h2>
+    <div class="text-center">
+      {{ data['cenik']|safe }}
+    </div>
+
+    <!-- Částka v kase -->
+    <h2>Částka v kase</h2>
+    <div class="kasa-display">
+      {{ data['kasa']|safe }}
+    </div>
+
+    <!-- Dluhy -->
+    <h2>Dluhy</h2>
+    <div class="text-center">
+      {{ data['dluhy']|safe }}
+    </div>
+
+    <!-- Top 3 největší dlužníci -->
+    <h2>Aktuálně 3 největší dlužníci</h2>
+    {% if data['vitezove'].get('top3_dluhu') and data['vitezove']['top3_dluhu']|length > 0 %}
+      <div class="row justify-content-center">
+        {% for debtor in data['vitezove']['top3_dluhu'] %}
+          <div class="col-md-4">
+            <div class="card">
+              <img class="card-img-top top-debtor-img"
+                   src="{{ url_for('static', filename='fotky/' ~ debtor['Foto']) }}"
+                   alt="{{ debtor['Jméno'] }} {{ debtor['Příjmení'] }}">
+              <div class="card-body">
+                <h5 class="card-title name-title">{{ debtor['Jméno'] }} {{ debtor['Příjmení'] }}</h5>
+                <p class="card-text">
+                  Dluh: {{ debtor['Dluh'] }}
+                </p>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p class="text-center">Žádná data o dluzích nebyla nalezena.</p>
+    {% endif %}
+  </div>
+</body>
+</html>
