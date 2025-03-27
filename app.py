@@ -1,12 +1,14 @@
-from flask import Flask, render_template, url_for
-import pandas as pd
 import os
+import pandas as pd
+from flask import Flask, render_template, url_for
 
 app = Flask(__name__)
 
 def load_data():
     excel_file = "main.xlsx"
 
+    # Zde by měly být všechny knihovny a kód na načítání Excelu a zpracování DataFrame
+    # ----------------------------------------------------------
     if not os.path.exists(excel_file):
         print(f"Excel soubor '{excel_file}' nebyl nalezen!")
         cenik_df = pd.DataFrame()
@@ -63,22 +65,18 @@ def load_data():
     if "Dluh" in raw_dluhy_df.columns:
         raw_dluhy_df["Dluh_numeric"] = pd.to_numeric(raw_dluhy_df["Dluh"], errors="coerce")
         try:
-            # Vybereme 3 řádky s nejvyšší hodnotou Dluh_numeric
             top3 = raw_dluhy_df.nlargest(3, "Dluh_numeric")
             vitezove_list = []
             for idx, row in top3.iterrows():
-                # Nyní hledejme pouze podle sloupce "Jméno"
                 debtor_name = str(row.get("Jméno", "")).strip()
                 dluh_numeric = row["Dluh_numeric"]
                 photo = "placeholder.png"
 
-                # V "Sestava" hledáme stejnou hodnotu "Jméno"
                 if not sestava_df.empty and "Jméno" in sestava_df.columns and "Foto" in sestava_df.columns:
                     match = sestava_df[sestava_df["Jméno"].str.strip() == debtor_name]
                     if not match.empty:
                         photo = match.iloc[0]["Foto"]
 
-                # Přidáme do seznamu
                 vitezove_list.append({
                     "Jméno": debtor_name,
                     "Dluh": f"{int(dluh_numeric)} KČ" if pd.notna(dluh_numeric) else "",
@@ -136,5 +134,7 @@ def index():
     data = load_data()
     return render_template("index.html", data=data)
 
+# DŮLEŽITÉ: Spuštění Flasku na 0.0.0.0 a portu z os.environ["PORT"] pro Railway
 if __name__ == "__main__":
-    app.run(debug=True)
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=True)
