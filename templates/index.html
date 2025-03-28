@@ -5,76 +5,22 @@
   <title>Pokladna fotbalového týmu</title>
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
   <style>
-    body {
-      background-color: #ffffff;
-      color: #000000;
-    }
-    header {
-      background-color: #ff0000;
-      padding: 20px;
-      text-align: center;
-    }
-    header img {
-      max-height: 100px;
-    }
-    header h1 {
-      font-size: 2.5rem;
-      color: #ffffff;
-      margin-top: 10px;
-    }
-    h2 {
-      border-bottom: 2px solid #000000;
-      padding-bottom: 5px;
-      margin-top: 30px;
-      text-align: center;
-    }
-    h3 {
-      margin-top: 20px;
-      text-align: center;
-    }
-    table {
-      table-layout: auto;
-      margin: 0 auto;
-    }
-    table th, table td {
-      text-align: center;
-      white-space: nowrap;
-      padding: 0.75rem;
-    }
+    body { background-color: #ffffff; color: #000000; }
+    header { background-color: #ff0000; padding: 20px; text-align: center; }
+    header img { max-height: 100px; }
+    header h1 { font-size: 2.5rem; color: #ffffff; margin-top: 10px; }
+    h2 { border-bottom: 2px solid #000000; padding-bottom: 5px; margin-top: 30px; text-align: center; }
+    h3 { margin-top: 20px; text-align: center; }
+    table { table-layout: auto; margin: 0 auto; }
+    table th, table td { text-align: center; white-space: nowrap; padding: 0.75rem; }
     /* Pro tabulku pokut nastavíme wrapování textu */
-    #pokuty-table th, #pokuty-table td {
-      white-space: normal;
-      word-wrap: break-word;
-    }
-    .card {
-      border: 1px solid #000000;
-      text-align: center;
-      margin: 10px;
-    }
-    .card img {
-      object-fit: contain;
-    }
-    .kasa-display {
-      font-size: 2.5rem;
-      font-weight: bold;
-      text-align: center;
-      margin: 20px 0;
-    }
-    .name-title {
-      font-weight: bold;
-      font-size: 1.5rem;
-    }
-    .top-debtor-img {
-      max-height: 150px;
-      max-width: 150px;
-      object-fit: contain;
-      margin: 0 auto;
-      display: block;
-    }
-    /* Globální styl pro label – zajistí, že popisky budou tučné */
-    label {
-      font-weight: bold;
-    }
+    #pokuty-table th, #pokuty-table td { white-space: normal; word-wrap: break-word; }
+    .card { border: 1px solid #000000; text-align: center; margin: 10px; }
+    .card img { object-fit: contain; }
+    .kasa-display { font-size: 2.5rem; font-weight: bold; text-align: center; margin: 20px 0; }
+    .name-title { font-weight: bold; font-size: 1.5rem; }
+    label { font-weight: bold; }
+    .top-debtor-img { max-height: 150px; max-width: 150px; object-fit: contain; margin: 0 auto; display: block; }
   </style>
 </head>
 <body>
@@ -83,7 +29,7 @@
     <h1>Podle peří poznáš ptáka, podle ptáka Chroustováka...</h1>
   </header>
   <div class="container my-4">
-    <!-- Sestava – hráči jako karty -->
+    <!-- Sestava – hráči rozdělení podle pozic -->
     <section>
       <h2>Sestava</h2>
       {% for pos, players in data['sestava'].items() %}
@@ -98,14 +44,15 @@
                   <img class="card-img-top" src="{{ url_for('static', filename='fotky/placeholder.png') }}" alt="Není k dispozici" style="max-height:150px;">
                 {% endif %}
                 <div class="card-body">
-                  <h5 class="card-title name-title">
-                    {{ player['Jméno'] }}{% if player['Příjmení'] %} {{ player['Příjmení'] }}{% endif %}
-                  </h5>
+                  <h5 class="card-title name-title">{{ player['Jméno'] }}{% if player['Příjmení'] %} {{ player['Příjmení'] }}{% endif %}</h5>
                   <p class="card-text">
                     <label>Věk:</label> {{ player['Věk'] }}<br>
                     <label>Číslo dresu:</label> {{ player['Číslo dresu'] }}<br>
-                    <label>Popis:</label> {{ player['Popis'] }}<br>
-                    <label>Počet gólů:</label> {{ player['Počet gólů za sezónu'] }}
+                    <label>Počet gólů:</label> {{ player['Počet gólů za sezónu'] }}<br>
+                    <label>Počet zápasů:</label> {{ player['Počet zápasů'] }}<br>
+                    <label>ŽK:</label> {{ player['ŽK'] }}<br>
+                    <label>ČK:</label> {{ player['ČK'] }}<br>
+                    <label>Minuty:</label> {{ player['Minuty'] }}
                   </p>
                 </div>
               </div>
@@ -115,7 +62,7 @@
       {% endfor %}
     </section>
 
-    <!-- Pokuty (dříve Ceník) -->
+    <!-- Pokuty -->
     <section>
       <h2>Pokuty</h2>
       <div id="pokuty-table" class="text-center">
@@ -139,23 +86,23 @@
       </div>
     </section>
 
-    <!-- Top 3 největší dlužníci -->
+    <!-- Statistické sekce -->
     <section>
-      <h2>Aktuálně 3 největší dlužníci</h2>
-      {% if data['vitezove'].get('top3_dluhu') and data['vitezove']['top3_dluhu']|length > 0 %}
+      <h2>Největší dlužníci</h2>
+      {% if data['top_3_debtors'] %}
         <div class="row justify-content-center">
-          {% for debtor in data['vitezove']['top3_dluhu'] %}
-            <div class="col-md-4">
+          {% for player in data['top_3_debtors'] %}
+            <div class="col-md-3">
               <div class="card">
-                <img class="card-img-top top-debtor-img"
-                     src="{{ url_for('static', filename='fotky/' ~ debtor['Foto']) }}"
-                     alt="{{ debtor['Jméno'] }}{% if debtor['Příjmení'] %} {{ debtor['Příjmení'] }}{% endif %}">
+                {% if player['Foto'] %}
+                  <img class="card-img-top top-debtor-img" src="{{ url_for('static', filename='fotky/' ~ player['Foto']) }}" alt="{{ player['Jméno'] }}" style="max-height:150px;">
+                {% else %}
+                  <img class="card-img-top top-debtor-img" src="{{ url_for('static', filename='fotky/placeholder.png') }}" alt="Není k dispozici" style="max-height:150px;">
+                {% endif %}
                 <div class="card-body">
-                  <h5 class="card-title name-title">
-                    {{ debtor['Jméno'] }}{% if debtor['Příjmení'] %} {{ debtor['Příjmení'] }}{% endif %}
-                  </h5>
+                  <h5 class="card-title name-title">{{ player['Jméno'] }}</h5>
                   <p class="card-text">
-                    <label>Dluh:</label> {{ debtor['Dluh'] }}
+                    <label>Dluh:</label> {{ player['Dluh'] }}
                   </p>
                 </div>
               </div>
@@ -163,7 +110,122 @@
           {% endfor %}
         </div>
       {% else %}
-        <p class="text-center">Žádná data o dluzích nebyla nalezena.</p>
+        <p class="text-center">Žádná data o dlužnících.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>Nejlepší střelci</h2>
+      {% if data['top_3_goals'] %}
+        <div class="row justify-content-center">
+          {% for player in data['top_3_goals'] %}
+            <div class="col-md-3">
+              <div class="card">
+                {% if player['Foto'] %}
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/' ~ player['Foto']) }}" alt="{{ player['Jméno'] }}" style="max-height:150px;">
+                {% else %}
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/placeholder.png') }}" alt="Není k dispozici" style="max-height:150px;">
+                {% endif %}
+                <div class="card-body">
+                  <h5 class="card-title name-title">{{ player['Jméno'] }}</h5>
+                  <p class="card-text">
+                    <label>Počet gólů:</label> {{ player['Počet gólů za sezónu'] }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-center">Žádná data pro nejlepší střelce.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>Nejvíce odehraných minut</h2>
+      {% if data['top_3_minutes'] %}
+        <div class="row justify-content-center">
+          {% for player in data['top_3_minutes'] %}
+            <div class="col-md-3">
+              <div class="card">
+                {% if player['Foto'] %}
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/' ~ player['Foto']) }}" alt="{{ player['Jméno'] }}" style="max-height:150px;">
+                {% else %}
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/placeholder.png') }}" alt="Není k dispozici" style="max-height:150px;">
+                {% endif %}
+                <div class="card-body">
+                  <h5 class="card-title name-title">{{ player['Jméno'] }}</h5>
+                  <p class="card-text">
+                    <label>Minuty:</label> {{ player['Minuty'] }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-center">Žádná data pro odehrané minuty.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>Nejtrestanější hráči</h2>
+      {% if data['top_3_penalized'] %}
+        <div class="row justify-content-center">
+          {% for player in data['top_3_penalized'] %}
+            <div class="col-md-3">
+              <div class="card">
+                {% if player['Foto'] %}
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/' ~ player['Foto']) }}" alt="{{ player['Jméno'] }}" style="max-height:150px;">
+                {% else %}
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/placeholder.png') }}" alt="Není k dispozici" style="max-height:150px;">
+                {% endif %}
+                <div class="card-body">
+                  <h5 class="card-title name-title">{{ player['Jméno'] }}</h5>
+                  <p class="card-text">
+                    <label>ŽK:</label> {{ player['ŽK'] | int }}<br>
+                    <label>ČK:</label> {{ player['ČK'] | int }}<br>
+                    <label>Body za karty:</label> {{ player['Penalty'] | int }}
+                  </p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-center">Žádná data pro nejtrestanější hráče.</p>
+      {% endif %}
+    </section>
+
+    <section>
+      <h2>Nejméně potřebných minut na gól</h2>
+      {% if data['top_3_minute_per_goal'] %}
+        <div class="row justify-content-center">
+          {% for player in data['top_3_minute_per_goal'] %}
+            <div class="col-md-3">
+              <div class="card">
+                {% if player['Foto'] %}
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/' ~ player['Foto']) }}" alt="{{ player['Jméno'] }}" style="max-height:150px;">
+                {% else %}
+                  <img class="card-img-top" src="{{ url_for('static', filename='fotky/placeholder.png') }}" alt="Není k dispozici" style="max-height:150px;">
+                {% endif %}
+                <div class="card-body">
+                  <h5 class="card-title name-title">{{ player['Jméno'] }}</h5>
+                  <p class="card-text">
+                    <label>Minuty na gól:</label>
+                    {% if player['Minuty na gól'] is not none %}
+                      {{ player['Minuty na gól'] | int }}
+                    {% else %}
+                      N/A
+                    {% endif %}
+                  </p>
+                </div>
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-center">Žádná data pro minuty na gól.</p>
       {% endif %}
     </section>
   </div>
